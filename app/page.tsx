@@ -1,218 +1,175 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 
-const ComposableMap = dynamic(
-  () => import("react-simple-maps").then((mod) => mod.ComposableMap),
-  { ssr: false }
-);
-
-const Geographies = dynamic(
-  () => import("react-simple-maps").then((mod) => mod.Geographies),
-  { ssr: false }
-);
-
-const Geography = dynamic(
-  () => import("react-simple-maps").then((mod) => mod.Geography),
-  { ssr: false }
-);
-
-const geoUrl =
-  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-
-const energyData: Record<
-  string,
-  { solar: number; wind: number; gas: number; coal: number }
-> = {
-  Germany: { solar: 12, wind: 31, gas: 16, coal: 21 },
-  "United States of America": { solar: 6, wind: 11, gas: 43, coal: 16 },
-  China: { solar: 8, wind: 10, gas: 3, coal: 58 },
-  France: { solar: 4, wind: 8, gas: 7, coal: 1 },
-  "United Kingdom": { solar: 5, wind: 28, gas: 34, coal: 2 },
-  India: { solar: 7, wind: 5, gas: 4, coal: 72 },
-  Canada: { solar: 1, wind: 7, gas: 10, coal: 2 },
-  Brazil: { solar: 6, wind: 13, gas: 9, coal: 4 },
+type Country = {
+  name: string;
+  solar: number;
+  wind: number;
+  hydro: number;
+  gas: number;
+  coal: number;
 };
 
+const countries: Country[] = [
+  { name: "Norway", solar: 4, wind: 12, hydro: 78, gas: 3, coal: 3 },
+  { name: "Germany", solar: 14, wind: 31, hydro: 5, gas: 24, coal: 26 },
+  { name: "Saudi Arabia", solar: 3, wind: 1, hydro: 0, gas: 61, coal: 35 },
+  { name: "USA", solar: 8, wind: 12, hydro: 6, gas: 43, coal: 31 },
+  { name: "Brazil", solar: 10, wind: 15, hydro: 55, gas: 10, coal: 10 },
+  { name: "China", solar: 9, wind: 11, hydro: 14, gas: 8, coal: 58 },
+  { name: "Venezuela", solar: 5, wind: 8, hydro: 0, gas: 20, coal: 25 },
+];
+
 export default function Home() {
-  const [country, setCountry] = useState("Click a country");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("Germany");
 
-  const [mix, setMix] = useState({
-    solar: 0,
-    wind: 0,
-    gas: 0,
-    coal: 0,
-  });
+  const result =
+    countries.find((c) =>
+      c.name.toLowerCase().includes(search.toLowerCase())
+    ) || countries[0];
 
-  function loadData(name: string) {
-    const foundKey =
-      Object.keys(energyData).find(
-        (key) => key.toLowerCase() === name.toLowerCase()
-      ) || name;
+  const renewable = result.solar + result.wind + result.hydro;
 
-    const data = energyData[foundKey] || {
-      solar: 5,
-      wind: 8,
-      gas: 20,
-      coal: 25,
-    };
+  const level =
+    renewable >= 60 ? "Excellent" : renewable >= 35 ? "Medium" : "Low";
 
-    setCountry(foundKey);
-    setSearch(foundKey);
-    setMix(data);
-  }
-
-  function handleSearch(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") {
-      loadData(search);
-    }
-  }
-
-  const renewable = useMemo(() => mix.solar + mix.wind, [mix]);
-
-  const leaderboard = Object.entries(energyData)
-    .map(([name, data]) => ({
-      name,
-      renewable: data.solar + data.wind,
-    }))
-    .sort((a, b) => b.renewable - a.renewable)
-    .slice(0, 5);
-
-  let score = "Low";
-
-  if (renewable >= 55) score = "Excellent";
-  else if (renewable >= 35) score = "Good";
-  else if (renewable >= 20) score = "Average";
+  const ranking = useMemo(() => {
+    return [...countries].sort(
+      (a, b) =>
+        b.solar +
+        b.wind +
+        b.hydro -
+        (a.solar + a.wind + a.hydro)
+    );
+  }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-black text-white px-4 md:px-8 pt-6 pb-10">
-      <section className="max-w-6xl mx-auto text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-400/20 text-green-300 text-sm mb-4">
-          <span className="h-2 w-2 rounded-full bg-green-400"></span>
-          Rankings Added
+    <main className="min-h-screen bg-[#020617] text-white overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#0f766e20,transparent_35%),radial-gradient(circle_at_right,#22c55e15,transparent_25%)]" />
+
+      <section className="relative max-w-6xl mx-auto px-6 py-20">
+        {/* Hero */}
+        <div className="text-center max-w-3xl mx-auto">
+          <div className="inline-block px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm mb-6">
+            Live Rankings Added
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+            GreenAtlasGrid
+          </h1>
+
+          <p className="mt-6 text-lg md:text-xl text-slate-300">
+            Track the world&apos;s energy transition. Explore electricity
+            generation mixes, renewable rankings, and country performance.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold transition">
+              Explore Rankings
+            </button>
+
+            <button className="px-6 py-3 rounded-xl border border-slate-600 hover:border-slate-400 transition">
+              View Map
+            </button>
+          </div>
         </div>
 
-        <h1 className="text-5xl md:text-7xl font-bold mb-4">
-          GreenAtlasGrid
-        </h1>
+        {/* Search */}
+        <div className="mt-14 max-w-2xl mx-auto">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search country..."
+            className="w-full px-5 py-4 rounded-2xl bg-slate-900 border border-slate-700 outline-none focus:border-emerald-500"
+          />
+        </div>
 
-        <p className="text-slate-300 max-w-2xl mx-auto text-lg md:text-xl">
-          Explore electricity generation mixes around the world.
-        </p>
-      </section>
+        {/* Country Card */}
+        <div className="mt-10 grid md:grid-cols-2 gap-8">
+          <div className="rounded-3xl border border-slate-800 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
+            <div className="flex justify-between items-center">
+              <h2 className="text-4xl font-bold text-emerald-400">
+                {result.name}
+              </h2>
 
-      <section className="max-w-xl mx-auto mb-6">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={handleSearch}
-          placeholder="Type country and press Enter..."
-          className="w-full rounded-2xl bg-white/5 border border-white/10 px-5 py-4 text-white outline-none"
-        />
-      </section>
-
-      <section className="max-w-xl mx-auto mb-8">
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
-          <div className="flex items-center justify-between gap-4 mb-5">
-            <h2 className="text-2xl md:text-3xl font-bold text-green-400">
-              {country}
-            </h2>
-
-            <span className="px-4 py-2 rounded-full text-sm font-semibold bg-green-500/20 text-green-300 border border-green-400/20">
-              {score}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-sm md:text-base mb-5">
-            <div className="bg-slate-800/70 rounded-xl p-3">☀ Solar: {mix.solar}%</div>
-            <div className="bg-slate-800/70 rounded-xl p-3">🌬 Wind: {mix.wind}%</div>
-            <div className="bg-slate-800/70 rounded-xl p-3">🔥 Gas: {mix.gas}%</div>
-            <div className="bg-slate-800/70 rounded-xl p-3">🪨 Coal: {mix.coal}%</div>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-sm mb-2 text-slate-300">
-              <span>Renewable Score</span>
-              <span>{renewable}%</span>
+              <span className="px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-300 text-sm">
+                {level}
+              </span>
             </div>
 
-            <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-green-500"
-                style={{ width: renewable + "%" }}
-              ></div>
+            <div className="grid grid-cols-2 gap-4 mt-8">
+              <Stat label="☀ Solar" value={result.solar} />
+              <Stat label="🌬 Wind" value={result.wind} />
+              <Stat label="💧 Hydro" value={result.hydro} />
+              <Stat label="🔥 Gas" value={result.gas} />
+              <Stat label="🪨 Coal" value={result.coal} />
             </div>
-          </div>
-        </div>
-      </section>
 
-      <section className="max-w-7xl mx-auto mb-10">
-        <div className="bg-slate-900/80 border border-white/5 rounded-3xl p-4 md:p-10 shadow-2xl">
-          <ComposableMap projectionConfig={{ scale: 175 }}>
-            <Geographies geography={geoUrl}>
-              {({ geographies }) =>
-                geographies.map((geo) => (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    onClick={() =>
-                      loadData(
-                        geo.properties.name || "Unknown country"
-                      )
-                    }
-                    style={{
-                      default: {
-                        fill: "#14532d",
-                        outline: "none",
-                      },
-                      hover: {
-                        fill: "#22c55e",
-                        outline: "none",
-                        cursor: "pointer",
-                      },
-                      pressed: {
-                        fill: "#4ade80",
-                        outline: "none",
-                      },
-                    }}
-                  />
-                ))
-              }
-            </Geographies>
-          </ComposableMap>
-        </div>
-      </section>
-
-      <section className="max-w-3xl mx-auto">
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-2xl font-bold mb-5 text-green-400">
-            Top Renewable Countries
-          </h3>
-
-          <div className="space-y-3">
-            {leaderboard.map((item, index) => (
-              <div
-                key={item.name}
-                className="flex justify-between bg-slate-800/70 rounded-xl p-4"
-              >
-                <span>
-                  #{index + 1} {item.name}
-                </span>
-
-                <span className="font-bold text-green-300">
-                  {item.renewable}%
-                </span>
+            <div className="mt-8">
+              <div className="flex justify-between text-sm text-slate-300 mb-2">
+                <span>Renewable Score</span>
+                <span>{renewable}%</span>
               </div>
-            ))}
+
+              <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500"
+                  style={{ width: `${renewable}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Ranking Card */}
+          <div className="rounded-3xl border border-slate-800 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-bold mb-6">Top Renewable Rankings</h3>
+
+            <div className="space-y-4">
+              {ranking.map((c, i) => {
+                const score = c.solar + c.wind + c.hydro;
+
+                return (
+                  <div
+                    key={c.name}
+                    className="flex justify-between items-center px-4 py-3 rounded-xl bg-slate-900/70"
+                  >
+                    <div className="flex gap-3 items-center">
+                      <span className="text-emerald-400 font-bold w-8">
+                        #{i + 1}
+                      </span>
+                      <span>{c.name}</span>
+                    </div>
+
+                    <span className="text-slate-300">{score}%</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </section>
 
-      <section className="text-center mt-8 text-slate-500 text-sm">
-        GreenAtlasGrid • MVP Phase 3
+        {/* Footer */}
+        <footer className="mt-20 border-t border-slate-800 pt-8 text-center text-slate-400">
+          Built by Bashir • Next.js • React • Vercel
+        </footer>
       </section>
     </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-2xl bg-slate-900/80 p-4">
+      <div className="text-slate-400 text-sm">{label}</div>
+      <div className="text-xl font-semibold mt-1">{value}%</div>
+    </div>
   );
 }
