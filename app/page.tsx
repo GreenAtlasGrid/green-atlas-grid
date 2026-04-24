@@ -1,7 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography } from "react-simple-maps";
+import dynamic from "next/dynamic";
+
+const ComposableMap = dynamic(
+  () => import("react-simple-maps").then((mod) => mod.ComposableMap),
+  { ssr: false }
+);
+
+const Geographies = dynamic(
+  () => import("react-simple-maps").then((mod) => mod.Geographies),
+  { ssr: false }
+);
+
+const Geography = dynamic(
+  () => import("react-simple-maps").then((mod) => mod.Geography),
+  { ssr: false }
+);
 
 const geoUrl =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
